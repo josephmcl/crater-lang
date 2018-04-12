@@ -1,3 +1,5 @@
 main.c
 Makefile
-*.txt
++.txt
++.o
+main

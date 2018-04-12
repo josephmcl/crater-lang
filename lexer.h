@@ -1,3 +1,8 @@
+/*lexer.h
+  Copyright ©2018 Joseph McLaughlin
+  This file is covered by the MIT license. Refer to the LICENSE file in 
+  the root directory of this project for more information.  
+ */
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,8 +14,6 @@
 typedef struct file_info_s file_info_t;
 
 file_info_t *read_file(const char *path, const char *options);
-
-int utf8_code_point_length(uint8_t c);
 
 int utf8_lexer(file_info_t *s);
 

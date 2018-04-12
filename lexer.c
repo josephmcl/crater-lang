@@ -1,3 +1,9 @@
+/*lexer.c
+  Copyright ©2018 Joseph McLaughlin
+  This file is covered by the MIT license. Refer to the LICENSE file in 
+  the root directory of this project for more information.  
+ */
+#include "token.h"
 #include "lexer.h"
 
 #define LINE_SIZE 74
@@ -63,7 +69,10 @@ int utf8_lexer(file_info_t *s) {
         
         if (s->content[i] == '\n') lines += 1;
 
-        printf("%d, \'%s\'\n", length, c);
+        if (utf8_whitespace(&s->content[i]))
+            printf("%d, \'%s\'\n", length, c);
+        else
+            printf(">WS: %d, \'%s\'\n", length, c);
 
         i += length;
     }
@@ -87,18 +96,3 @@ int whitespace(unsigned char c) {
     }
 }
 
-
-
-
-
-int utf8_code_point_length(uint8_t c) {
-    if ((c & 0x80) == 0) 
-        return 1;
-    if ((c & 0x20) == 0)
-        return 2;
-    if ((c & 0x10) == 0)
-        return 3;
-    if ((c & 0x8) == 0)
-        return 4;
-    return 0; //TODO: this won't do
-}
