@@ -88,12 +88,20 @@ int utf8_code_point_to_int(uint8_t *code_point) {
             + (*(code_point + 1) - 0x80);
     if ((*code_point & 0x10) == 0)
         return 
+<<<<<<< HEAD
+            (((*code_point) - 0xE0) << 12)
+=======
             (((*code_point) - 0xC0) << 12)
+>>>>>>> a7d222e693ef000ecfd9c60a788204aa107aa3c9
             + ((*(code_point + 1) - 0x80) << 6)
             + (*(code_point + 2) - 0x80);
     if ((*code_point & 0x8) == 0)
         return 
+<<<<<<< HEAD
+            (((*code_point) - 0xF0) << 18)
+=======
             (((*code_point) - 0xC0) << 18)
+>>>>>>> a7d222e693ef000ecfd9c60a788204aa107aa3c9
             + ((*(code_point + 1) - 0x80) << 12)
             + ((*(code_point + 2) - 0x80) << 6)
             + (*(code_point + 2) - 0x80);

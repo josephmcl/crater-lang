@@ -3,6 +3,15 @@
   This file is covered by the MIT license. Refer to the LICENSE file in 
   the root directory of this project for more information.  
  */
+<<<<<<< HEAD
+<<<<<<< HEAD
+#ifndef CRATER_LANG_TOKEN_H_
+#define CRATER_LANG_TOKEN_H_
+
+=======
+>>>>>>> a7d222e693ef000ecfd9c60a788204aa107aa3c9
+=======
+>>>>>>> a7d222e693ef000ecfd9c60a788204aa107aa3c9
 #include <stdint.h>
 #include <stdio.h>
 
@@ -75,4 +84,11 @@ int utf8_whitespace(uint8_t *code_point);
 
 int utf8_code_point_length(uint8_t c);
 
+<<<<<<< HEAD
 int utf8_code_point_to_int(uint8_t *code_point);
+
+#endif
+
+=======
+int utf8_code_point_to_int(uint8_t *code_point);
+>>>>>>> a7d222e693ef000ecfd9c60a788204aa107aa3c9
