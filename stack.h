@@ -6,6 +6,8 @@
 
 #include <stdlib.h>
 
+#include "stack.h"
+
 /* unsafe stack, only push pointers to value types */
 struct stack_s {
     void *content;

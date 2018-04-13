@@ -6,6 +6,8 @@
 
 #include "lexer.h"
 
+
+
 enum lexer_state {
     parentheses_state,
     string_literal_state
