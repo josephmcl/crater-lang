@@ -27,13 +27,14 @@ int stack_push(void *item) {
     stack->size += 1;
     return 0;
 }
-int stack_pop(stack_t *stack) {
-    if (stack->size == stack->capacity) {
-        stack->capacity += STACK_BLOCK;
-        stack->content = realloc(stack->content, stack->capacity);
-    }
-    stack->content[stack->size] = item;
-    stack->size += 1;
+int stack_pop(stack_t *stack) { 
+    if (stack->size <= 0) 
+        return 1;
+    //TODO: in C99 I think we can use realloc to resize down
+    // going to have to decide at some point...
+    stack->size -= 1;
+    stack->content[stack->size] = 0;
+    
 }
 void *stack_peek(stack_t *stack) {
     if (stack->size > 0)
