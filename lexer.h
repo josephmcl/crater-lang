@@ -76,8 +76,14 @@ enum lexical_token {
 
 };
 
+typedef struct lexical_info_s {
+    uint8_t code_point[5];
+
+} lexical_info_t;
+
 struct lexer {
     file_info_t *file;
+    lexical_info_t *info;
     //lexical_token (*next)(void);
     int (*read)(const char *path, const char *options);
     void (*free)();

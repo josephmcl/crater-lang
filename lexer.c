@@ -6,7 +6,17 @@
 
 #include "lexer.h"
 
+enum lexer_state {
+    parentheses_state,
+    string_literal_state
+};
+
+
+static const file_info_t EmptyFileInfo;
+static const lexical_info_t EmptyLexicalInfo;
+
 file_info_t TheFile = {0}; 
+lexical_info_t TheInfo = {0}; 
 
 int lexer_read(const char *path, const char *options) {
     TheFile = read_file(path, options);
@@ -14,6 +24,8 @@ int lexer_read(const char *path, const char *options) {
 
 void lexer_free() {
     free(Lexer.file->content);
+    TheFile = EmptyFileInfo;
+    TheInfo = EmptyLexicalInfo; 
 }
 
 int utf8_lexer() {
@@ -38,7 +50,7 @@ int utf8_lexer() {
         
         if (Lexer.file->content[i] == '\n') lines += 1;
 
-        if (utf8_whitespace(&Lexer.file->content[i]))
+        if (utf8_whitespace(&Lexer.file->content[i]) == 0)
             printf("%d, \'%s\'\n", length, c);
         else
             printf(">WS: %d, \'%s\'\n", length, c);
@@ -49,9 +61,14 @@ int utf8_lexer() {
 
 }
 
+enum lexical_token next() {
+
+}
+
 
 const struct lexer Lexer = {
     .file = &TheFile,
+    .info = &TheInfo,
     //.next = next
     .read = lexer_read,
     .free = lexer_free,
