@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct file_info_s file_info_t;
+typedef struct file_info_s file_info;
 
 struct file_info_s {
     uint8_t *content;
@@ -19,6 +19,6 @@ struct file_info_s {
     int capacity;
 };
 
-file_info_t read_file(const char *path, const char *options);
+file_info read_file(const char *path, const char *options);
 
 #endif

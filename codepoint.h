@@ -9,12 +9,18 @@
 #include <stdint.h>
 #include <stdio.h>
 
-int utf8_code_point_cmp(uint8_t *a, uint8_t *b);
+int code_point_cmp(uint8_t *a, uint8_t *b);
 
 int utf8_whitespace(uint8_t *code_point);
 
 int utf8_code_point_length(uint8_t c);
 
 int utf8_code_point_to_int(uint8_t *code_point);
+
+int utf8_code_point_alpha(uint8_t code_point);
+
+int utf8_code_point_numeric(uint8_t code_point);
+
+int cp_alphanum(uint8_t c);
 
 #endif

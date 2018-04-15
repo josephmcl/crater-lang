@@ -14,80 +14,49 @@
 #include "io.h"
 #include "codepoint.h"
 
-enum lexical_token {
+typedef enum {
     
-    identifier,
-    integer_literal_decimal,
-    /*
-    integer_literal_binary,
-    integer_literal_octal,
-    integer_literal_hexidecimal,
-    float_literal,
-    string_literal,
-    */
-    nil,
-    true_,
-    false_,
+    UNKNOWN = -2,
+    START_OF_CONTENT = -1,
+    END_OF_CONTENT = 0,
+    ESACPE = 1,
+    LINE_END = 2,
+    LINE_COMMENT = 3,
 
+    IDENTIFIER = 16
+} lexical_token;
 
-    parentheses_left,
-    parentheses_right,
-    /*
-    bracket_square_left,
-    bracket_square_right,
-    bracket_curly_left,
-    bracket_curly_right,
-    */
+typedef enum {
+    PURE_STATE,
+    LINE_COMMENT_STATE,
+    STRING_LITERAL_STATE,
+    THREE_STR_LITERAL_STATE
+} lexical_state;
 
-    assignment_owned,
-    //assignment_unowned,
+typedef struct {
+    lexical_token token;
+    uint8_t *end;
+} lexical_store;
 
-    operator_plus,
-    operator_minus,
-    operator_multiplication,
-    operator_division,
-    operator_integer_division,
-    operator_exponent,
-
-    /*
-    logical_not,
-    logical_and,
-    logical_or,
-    logical_xor
-    */
-
-    equals,
-    atmost,
-    less,
-    atleast,
-    greater,
-
-    /*
-    bitwise_not,
-    bitwise_and,
-    bitwise_or,
-    bitwise_xor,
-
-    bitshift_left,
-    bitshift_right,
-    */
-    line_end,
-    escaped_line_end
-
-};
-
-typedef struct lexical_info_s {
+typedef struct {
+    lexical_store *tokens;
+    lexical_state state;
     uint8_t code_point[5];
+    unsigned int rows;
+    unsigned int columns;
+    int index;
+    uint8_t *current;
 
-} lexical_info_t;
+} lexical_info;
 
 struct lexer {
-    file_info_t *file;
-    lexical_info_t *info;
+    file_info *file;
+    lexical_info *info;
     //lexical_token (*next)(void);
-    int (*read)(const char *path, const char *options);
+    int (*read)(const char *path, const char *file);
     void (*free)();
-    int (*lexer)();
+    //int (*lexer)();
+    int (*analyze)();
 };
 
 extern const struct lexer Lexer;

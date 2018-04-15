@@ -5,6 +5,7 @@
  */
 #include "codepoint.h"
 
+#define WHITESPACE_LENGTH 25
 const int utf8_whitespace_integers[] = {
     9,
     //10, //newline
@@ -54,12 +55,9 @@ int utf8_whitespace(uint8_t *code_point) {
 
     val = utf8_code_point_to_int(code_point);
 
-    for (i = 0; i < 25; ++i) 
-        if (val == utf8_whitespace_integers[i]) {
-            printf("int val: %d\n", val);
+    for (i = 0; i < WHITESPACE_LENGTH; ++i) 
+        if (val == utf8_whitespace_integers[i])
             return 0;
-        }
-
     return 1;
 }
 
@@ -78,8 +76,6 @@ int utf8_code_point_length(uint8_t c) {
 }
 
 int utf8_code_point_to_int(uint8_t *code_point) {
-    int rv;
-
     if ((*code_point & 0x80) == 0) 
         return (*code_point);
     if ((*code_point & 0x20) == 0)
@@ -97,10 +93,30 @@ int utf8_code_point_to_int(uint8_t *code_point) {
             + ((*(code_point + 1) - 0x80) << 12)
             + ((*(code_point + 2) - 0x80) << 6)
             + (*(code_point + 2) - 0x80);
-    
+    else 
+        return 0;
 
 }
 
-uint8_t *int_to_utf8_code_point(int code_point) {
+int utf8_code_point_alpha(uint8_t code_point) {
+    if (utf8_code_point_length(code_point) != 1)
+        return 1;
+    if (('A' <= code_point) && (code_point <= 'z')) 
+        return 0;
+    return 1;
+}
 
-} 
+int utf8_code_point_numeric(uint8_t code_point) {
+    if (utf8_code_point_length(code_point) != 1)
+        return 1;
+    if (('0' <= code_point) && (code_point <= '9')) 
+        return 0;
+    return 1;
+}
+
+int cp_alphanum(uint8_t c) {
+    if ((utf8_code_point_alpha(c) == 0) || 
+        (utf8_code_point_numeric(c) == 0))
+        return 0;
+    return 1;
+}

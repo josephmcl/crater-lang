@@ -6,29 +6,113 @@
 
 #include "lexer.h"
 
+//static const file_info EmptyFileInfo = {0};
+//static const lexical_info EmptyLexicalInfo = {0};
+
+/* The struct in which the lexer operates on. */
+static file_info TheFile = {0}; 
+static lexical_info TheInfo = {0}; 
 
 
-enum lexer_state {
-    parentheses_state,
-    string_literal_state
-};
-
-
-static const file_info_t EmptyFileInfo;
-static const lexical_info_t EmptyLexicalInfo;
-
-file_info_t TheFile = {0}; 
-lexical_info_t TheInfo = {0}; 
 
 int lexer_read(const char *path, const char *options) {
     TheFile = read_file(path, options);
+    //stack_init(TheInfo.stack);
+    return 0;
 }
 
 void lexer_free() {
-    free(Lexer.file->content);
-    TheFile = EmptyFileInfo;
-    TheInfo = EmptyLexicalInfo; 
+    free(TheFile.content);
+    //free(TheInfo.tokens);
+    TheFile = (file_info) {0};
+    TheInfo = (lexical_info) {0}; 
 }
+
+lexical_store lexer_next() {
+    lexical_store rv;
+    int code_point_length;
+
+    rv.token = UNKNOWN;
+    rv.end = TheInfo.current;
+
+
+    /* consume any whitespace */
+    while (utf8_whitespace(rv.end) == 0) {
+        rv.end += utf8_code_point_length(*rv.end);
+    }
+
+    //TODO: I'd like to not modify this struct in this function,
+    //find another way of communicating how much whitespace there was
+    TheInfo.current = rv.end;  
+
+    if ((&TheFile.content[TheFile.length] - TheInfo.current) <= 0) {
+        rv.token = END_OF_CONTENT;
+        return rv;
+    }
+
+    
+    code_point_length = utf8_code_point_length(*rv.end);
+
+
+    // IDENTIFIER
+    if (utf8_code_point_alpha(*rv.end) == 0) {
+        rv.token = IDENTIFIER;
+        while (cp_alphanum(*(rv.end + code_point_length)) == 0){
+            rv.end += code_point_length;
+            code_point_length = utf8_code_point_length(*rv.end);
+        }
+    }
+    else if (*rv.end == '\n') {
+        rv.token = LINE_END;
+    }
+ 
+    return rv;
+}
+
+int analyze() {
+    int token_length;
+    static int line_length;
+    lexical_store next;
+    uint8_t *temp;
+    
+    TheInfo.rows = 1;
+    TheInfo.index = 0;
+    TheInfo.current = TheFile.content;
+
+    line_length = 0;
+    while ((next = lexer_next()).token != END_OF_CONTENT) {
+        token_length = next.end + 1 - TheInfo.current;
+        line_length += token_length;
+
+        switch (next.token) {
+        case LINE_END: {
+            TheInfo.rows += 1;
+            if (line_length > TheInfo.rows)
+                TheInfo.columns = line_length;
+            line_length = 0;
+            printf("new line (%d so far)\n", TheInfo.rows);
+        } break;
+        case IDENTIFIER: {
+            temp = (uint8_t *) calloc(0, token_length * sizeof(uint8_t));
+
+            memcpy(temp, TheInfo.current, token_length);
+
+            printf("<%s>[%d]\n", temp, token_length);
+
+            free(temp);
+        } break;
+        default:
+            printf("Unknown symbol row %d, column %d. Moving ahead one byte\n", TheInfo.rows, line_length);
+            ++TheInfo.current;
+        }
+
+        
+
+        TheInfo.current += token_length;
+    }
+    printf("END OF CONTENT. Lexical Analysis complete.\n");
+    return 0;
+} 
 
 int utf8_lexer() {
     int i, length, j;
@@ -61,11 +145,10 @@ int utf8_lexer() {
     }
     printf("lines: %d\n",lines);
 
+    return 0;
 }
 
-enum lexical_token next() {
 
-}
 
 
 const struct lexer Lexer = {
@@ -74,5 +157,6 @@ const struct lexer Lexer = {
     //.next = next
     .read = lexer_read,
     .free = lexer_free,
-    .lexer = utf8_lexer
+    //.lexer = utf8_lexer
+    .analyze = analyze
 };

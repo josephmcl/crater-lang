@@ -9,7 +9,7 @@
 
 
 
-static void _append_byte(file_info_t *file_info, uint8_t byte) {
+static void _append_byte(file_info *file_info, uint8_t byte) {
     if (file_info->length == file_info->capacity) {
         file_info->capacity += LINE_SIZE;
         file_info->content = (uint8_t *) realloc(
@@ -21,10 +21,10 @@ static void _append_byte(file_info_t *file_info, uint8_t byte) {
     file_info->length += 1; // TODO: we'll need to specify a max here
 }
 
-file_info_t read_file(const char *path, const char *options) {
+file_info read_file(const char *path, const char *options) {
     FILE *f;
     uint8_t b;
-    file_info_t rv = {0};
+    file_info rv = {0};
 
     f = NULL;
     f = fopen(path, options);
