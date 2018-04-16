@@ -29,7 +29,7 @@ void lexer_free() {
 }
 
 lexical_store lexer_next() {
-    lexical_store rv;
+    lexical_store rv, temp;
     int code_point_length;
 
     rv.token = UNKNOWN;
@@ -54,7 +54,16 @@ lexical_store lexer_next() {
     code_point_length = utf8_code_point_length(*rv.end);
 
 
-    // IDENTIFIER
+    /* INTEGER DECIMAL LITERAL */
+    if (utf8_code_point_numeric(*rv.end) == 0) {
+        temp.token = INTEGER_DECIMAL_LITERAL;
+        while (utf8_code_point_numeric(*(rv.end + code_point_length)) == 0){
+            rv.end += code_point_length;
+            code_point_length = utf8_code_point_length(*rv.end);
+        }
+    }
+
+    /* IDENTIFIER */
     if (utf8_code_point_alpha(*rv.end) == 0) {
         rv.token = IDENTIFIER;
         while (cp_alphanum(*(rv.end + code_point_length)) == 0){
@@ -62,6 +71,8 @@ lexical_store lexer_next() {
             code_point_length = utf8_code_point_length(*rv.end);
         }
     }
+
+    /* LINE END */
     else if (*rv.end == '\n') {
         rv.token = LINE_END;
     }
@@ -92,6 +103,15 @@ int analyze() {
             line_length = 0;
             printf("new line (%d so far)\n", TheInfo.rows);
         } break;
+        case INTEGER_DECIMAL_LITERAL: {
+            temp = (uint8_t *) calloc(0, token_length * sizeof(uint8_t));
+
+            memcpy(temp, TheInfo.current, token_length);
+
+            printf("<%s>[%d]\n", temp, token_length);
+
+            free(temp);
+        } break;
         case IDENTIFIER: {
             temp = (uint8_t *) calloc(0, token_length * sizeof(uint8_t));
 
@@ -102,61 +122,22 @@ int analyze() {
             free(temp);
         } break;
         default:
-            printf("Unknown symbol row %d, column %d. Moving ahead one byte\n", TheInfo.rows, line_length);
-            ++TheInfo.current;
+            notice_c("Unknown symbol row %d, column %d. "
+                "Recovering.\n", TheInfo.rows, line_length);
         }
 
         
 
         TheInfo.current += token_length;
     }
-    printf("END OF CONTENT. Lexical Analysis complete.\n");
+    printf("END OF CONTENT. Lexical analysis complete.\n");
     return 0;
 } 
-
-int utf8_lexer() {
-    int i, length, j;
-    uint8_t c[5];
-    int lines;
-
-    c[4] = '\0';
-    i = 0; lines = 1;
-    while (i < Lexer.file->length) {
-
-        c[0] = '\0';
-        c[1] = '\0';
-        c[2] = '\0';
-        c[3] = '\0';
-
-        length = utf8_code_point_length(Lexer.file->content[i]);
-
-        for (j = 0; j < length; ++j)
-            c[j] = Lexer.file->content[i + j];
-
-        
-        if (Lexer.file->content[i] == '\n') lines += 1;
-
-        if (utf8_whitespace(&Lexer.file->content[i]) == 0)
-            printf("%d, \'%s\'\n", length, c);
-        else
-            printf(">WS: %d, \'%s\'\n", length, c);
-
-        i += length;
-    }
-    printf("lines: %d\n",lines);
-
-    return 0;
-}
-
-
-
 
 const struct lexer Lexer = {
     .file = &TheFile,
     .info = &TheInfo,
-    //.next = next
     .read = lexer_read,
     .free = lexer_free,
-    //.lexer = utf8_lexer
     .analyze = analyze
 };

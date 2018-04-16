@@ -23,15 +23,10 @@ typedef enum {
     LINE_END = 2,
     LINE_COMMENT = 3,
 
-    IDENTIFIER = 16
+    FLOAT_LITERAL = 15,
+    INTEGER_DECIMAL_LITERAL = 16,
+    IDENTIFIER = 17
 } lexical_token;
-
-typedef enum {
-    PURE_STATE,
-    LINE_COMMENT_STATE,
-    STRING_LITERAL_STATE,
-    THREE_STR_LITERAL_STATE
-} lexical_state;
 
 typedef struct {
     lexical_token token;
@@ -40,7 +35,6 @@ typedef struct {
 
 typedef struct {
     lexical_store *tokens;
-    lexical_state state;
     uint8_t code_point[5];
     unsigned int rows;
     unsigned int columns;
@@ -52,10 +46,8 @@ typedef struct {
 struct lexer {
     file_info *file;
     lexical_info *info;
-    //lexical_token (*next)(void);
-    int (*read)(const char *path, const char *file);
+    int (*read)(const char *path, const char *options);
     void (*free)();
-    //int (*lexer)();
     int (*analyze)();
 };
 
