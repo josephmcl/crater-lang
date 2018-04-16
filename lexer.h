@@ -46,7 +46,7 @@ typedef struct {
 struct lexer {
     file_info *file;
     lexical_info *info;
-    int (*read)(const char *path, const char *options);
+    int (*read)(const char *path);
     void (*free)();
     int (*analyze)();
 };

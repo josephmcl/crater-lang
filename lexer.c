@@ -15,8 +15,8 @@ static lexical_info TheInfo = {0};
 
 
 
-int lexer_read(const char *path, const char *options) {
-    TheFile = read_file(path, options);
+int lexer_read(const char *path) {
+    TheFile = read_file(path, "r");
     //stack_init(TheInfo.stack);
     return 0;
 }
@@ -53,6 +53,22 @@ lexical_store lexer_next() {
     
     code_point_length = utf8_code_point_length(*rv.end);
 
+    /* FLOAT LITERAL */
+    if (utf8_code_point_numeric(*rv.end) == 0) {
+        rv.token = INTEGER_DECIMAL_LITERAL;
+        while (utf8_code_point_numeric(*(rv.end + code_point_length)) == 0){
+            rv.end += code_point_length;
+            code_point_length = utf8_code_point_length(*rv.end);
+        }
+        if(*rv.end == '.') {
+            rv.end += code_point_length;
+            code_point_length = utf8_code_point_length(*rv.end);
+            while (utf8_code_point_numeric(*(rv.end + code_point_length)) == 0){
+                rv.end += code_point_length;
+                code_point_length = utf8_code_point_length(*rv.end);
+            }
+        }
+    }
 
     /* INTEGER DECIMAL LITERAL */
     if (utf8_code_point_numeric(*rv.end) == 0) {
