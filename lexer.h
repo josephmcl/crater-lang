@@ -40,8 +40,10 @@ typedef struct {
     unsigned int columns;
     int index;
     uint8_t *current;
-
+    int state;
+    uint8_t *prior_newline;
 } lexical_info;
+
 
 struct lexer {
     file_info *file;

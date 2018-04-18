@@ -23,6 +23,7 @@ int lexer_read(const char *path) {
 
 void lexer_free() {
     free(TheFile.content);
+    free(TheFile.name);
     //free(TheInfo.tokens);
     TheFile = (file_info) {0};
     TheInfo = (lexical_info) {0}; 
@@ -50,10 +51,12 @@ lexical_store lexer_next() {
         return rv;
     }
 
+    temp.token = rv.token;
+    temp.end = rv.end;
     
     code_point_length = utf8_code_point_length(*rv.end);
 
-    /* FLOAT LITERAL */
+    /* FLOAT LITERAL
     if (utf8_code_point_numeric(*rv.end) == 0) {
         rv.token = INTEGER_DECIMAL_LITERAL;
         while (utf8_code_point_numeric(*(rv.end + code_point_length)) == 0){
@@ -68,7 +71,14 @@ lexical_store lexer_next() {
                 code_point_length = utf8_code_point_length(*rv.end);
             }
         }
+
+        else if (*temp.end == '0') {
+            else if (*temp.end == 'x') {
+
+            }
+        }
     }
+    */
 
     /* INTEGER DECIMAL LITERAL */
     if (utf8_code_point_numeric(*rv.end) == 0) {
@@ -105,6 +115,7 @@ int analyze() {
     TheInfo.rows = 1;
     TheInfo.index = 0;
     TheInfo.current = TheFile.content;
+    TheInfo.prior_newline = TheFile.content;
 
     line_length = 0;
     while ((next = lexer_next()).token != END_OF_CONTENT) {
@@ -137,9 +148,14 @@ int analyze() {
 
             free(temp);
         } break;
-        default:
-            notice_c("Unknown symbol row %d, column %d. "
-                "Recovering.\n", TheInfo.rows, line_length);
+        default: {
+            fprintf(stderr, "%s:%d:%d: \033[31;1merror:\033[0m "
+                "unknown symbol"
+                "\n"
+                , TheFile.name, TheInfo.rows, line_length
+            );
+            TheInfo.state = -1;
+        }
         }
 
         

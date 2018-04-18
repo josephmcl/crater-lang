@@ -38,6 +38,11 @@ file_info read_file(const char *path, const char *options) {
         _append_byte(&rv, b);
     }    
     fclose(f); 
+
+    rv.name = (uint8_t *) malloc(strlen(path) * sizeof(uint8_t));
+    strcpy((char *) rv.name, path);
+
+
     return rv;
 } 
 
