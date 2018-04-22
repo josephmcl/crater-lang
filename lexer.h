@@ -13,37 +13,20 @@
 
 #include "io.h"
 #include "codepoint.h"
-
-typedef enum {
-    
-    UNKNOWN = -2,
-    START_OF_CONTENT = -1,
-    END_OF_CONTENT = 0,
-    ESACPE = 1,
-    LINE_END = 2,
-    LINE_COMMENT = 3,
-
-    FLOAT_LITERAL = 15,
-    INTEGER_DECIMAL_LITERAL = 16,
-    IDENTIFIER = 17
-} lexical_token;
+#include "token.h"
 
 typedef struct {
-    lexical_token token;
-    uint8_t *end;
-} lexical_store;
-
-typedef struct {
+    int count;
+    int capacity;
     lexical_store *tokens;
-    uint8_t code_point[5];
     unsigned int rows;
     unsigned int columns;
-    int index;
-    uint8_t *current;
+    unsigned int line_length;
+    int index; // TODO remove ? 
+    uint8_t *current; 
     int state;
     uint8_t *prior_newline;
 } lexical_info;
-
 
 struct lexer {
     file_info *file;
@@ -51,6 +34,7 @@ struct lexer {
     int (*read)(const char *path);
     void (*free)();
     int (*analyze)();
+    void (*print)();
 };
 
 extern const struct lexer Lexer;

@@ -3,20 +3,37 @@
   This file is covered by the MIT license. Refer to the LICENSE file in 
   the root directory of this project for more information.  
  */
-
 #include "lexer.h"
 
-//static const file_info EmptyFileInfo = {0};
-//static const lexical_info EmptyLexicalInfo = {0};
+#define TOKENS_SIZE 25
 
 /* The struct in which the lexer operates on. */
 static file_info TheFile = {0}; 
 static lexical_info TheInfo = {0}; 
 
+static int validate_escape(uint8_t *head, uint8_t *end) {
+    uint8_t *temp;
+    int escaped;
 
+    temp = head;
+    escaped = 1;
+    while(end - temp >= 0) {
+        if (escaped == 0 && is_escape(*temp) != 0) 
+            fprintf(stderr, "%s:%d:%ld: " error_s
+                " unknown escape sequence: \\%c"
+                "\n"
+                , TheFile.name, TheInfo.rows
+                , TheInfo.line_length + temp - head, *temp
+            );
+        escaped = (*temp == '\\')? 0: 1;
+        temp++;
+    }
+    return 0;
+}
 
 int lexer_read(const char *path) {
     TheFile = read_file(path, "r");
+
     //stack_init(TheInfo.stack);
     return 0;
 }
@@ -24,6 +41,7 @@ int lexer_read(const char *path) {
 void lexer_free() {
     free(TheFile.content);
     free(TheFile.name);
+    free(TheInfo.tokens);
     //free(TheInfo.tokens);
     TheFile = (file_info) {0};
     TheInfo = (lexical_info) {0}; 
@@ -31,145 +49,167 @@ void lexer_free() {
 
 lexical_store lexer_next() {
     lexical_store rv, temp;
-    int code_point_length;
-
-    rv.token = UNKNOWN;
-    rv.end = TheInfo.current;
+    uint8_t *offset;
 
 
-    /* consume any whitespace */
-    while (utf8_whitespace(rv.end) == 0) {
-        rv.end += utf8_code_point_length(*rv.end);
-    }
-
-    //TODO: I'd like to not modify this struct in this function,
-    //find another way of communicating how much whitespace there was
-    TheInfo.current = rv.end;  
-
+    /* END_OF_CONTENT */
     if ((&TheFile.content[TheFile.length] - TheInfo.current) <= 0) {
         rv.token = END_OF_CONTENT;
+        rv.end = TheInfo.current;
         return rv;
     }
 
-    temp.token = rv.token;
-    temp.end = rv.end;
-    
-    code_point_length = utf8_code_point_length(*rv.end);
-
-    /* FLOAT LITERAL
-    if (utf8_code_point_numeric(*rv.end) == 0) {
-        rv.token = INTEGER_DECIMAL_LITERAL;
-        while (utf8_code_point_numeric(*(rv.end + code_point_length)) == 0){
-            rv.end += code_point_length;
-            code_point_length = utf8_code_point_length(*rv.end);
-        }
-        if(*rv.end == '.') {
-            rv.end += code_point_length;
-            code_point_length = utf8_code_point_length(*rv.end);
-            while (utf8_code_point_numeric(*(rv.end + code_point_length)) == 0){
-                rv.end += code_point_length;
-                code_point_length = utf8_code_point_length(*rv.end);
-            }
-        }
-
-        else if (*temp.end == '0') {
-            else if (*temp.end == 'x') {
-
-            }
-        }
+    temp.token = UNKNOWN;
+    temp.end = TheInfo.current;
+    /* consume any whitespace */
+    while (utf8_whitespace(temp.end) == 0) {
+        //printf("<<%c>>", *temp.end);
+        temp.end += utf8_code_point_length(*temp.end);
     }
-    */
 
-    /* INTEGER DECIMAL LITERAL */
-    if (utf8_code_point_numeric(*rv.end) == 0) {
-        temp.token = INTEGER_DECIMAL_LITERAL;
-        while (utf8_code_point_numeric(*(rv.end + code_point_length)) == 0){
-            rv.end += code_point_length;
-            code_point_length = utf8_code_point_length(*rv.end);
-        }
+    rv.begin = temp.end;
+
+    /* END_OF_CONTENT */
+    if ((&TheFile.content[TheFile.length] - rv.begin) <= 0) {
+        rv.token = END_OF_CONTENT;
+        rv.end = TheInfo.current;
+        return rv;
+    }
+    
+    /* STRING_LITERAL */
+    else if ((offset = string_literal(temp.end, TheFile.end))!=temp.end) {
+        validate_escape(temp.end, offset);
+
+        rv.end = offset;
+        rv.token = STRING_LITERAL;
+    }
+
+    /* LINE_COMMENT */
+    else if ((offset = line_comment(temp.end, TheFile.end)) != temp.end) {
+        rv.end = offset;
+        rv.token = LINE_COMMENT;
+    }
+
+    /* FLOAT_LITERAL */
+    else if ((offset = float_literal(temp.end)) != temp.end) {
+        rv.end = offset;
+        rv.token = FLOAT_LITERAL;
+    }
+
+    /* RATIONAL_LITERAL */
+    else if ((offset = rational_literal(temp.end)) != temp.end) {
+        rv.end = offset;
+        rv.token = RATIONAL_LITERAL;
+    }
+
+    /* INTEGER_LITERAL */
+    else if ((offset = integer_literal(temp.end)) != temp.end) {
+        rv.end = offset;
+        rv.token = INTEGER_LITERAL;
     }
 
     /* IDENTIFIER */
-    if (utf8_code_point_alpha(*rv.end) == 0) {
+    else if ((offset = identifier(temp.end)) != temp.end) {
+        rv.end = offset;
         rv.token = IDENTIFIER;
-        while (cp_alphanum(*(rv.end + code_point_length)) == 0){
-            rv.end += code_point_length;
-            code_point_length = utf8_code_point_length(*rv.end);
-        }
     }
 
     /* LINE END */
-    else if (*rv.end == '\n') {
+    else if (*temp.end == '\n') {
         rv.token = LINE_END;
+        rv.end = rv.begin + 1;
+    }
+    else {
+        rv.token = UNKNOWN;
+        rv.end = rv.begin + utf8_code_point_length(*temp.end);
     }
  
     return rv;
 }
 
+static void push_token(lexical_store token) {  
+    if (TheInfo.count == TheInfo.capacity) {
+        TheInfo.capacity += TOKENS_SIZE;
+        TheInfo.tokens = (lexical_store *) realloc(
+            TheInfo.tokens, 
+            TheInfo.capacity * sizeof(lexical_store)
+        );       
+    }
+    TheInfo.tokens[TheInfo.count] = token;
+    TheInfo.count += 1; // TODO: we'll need to specify a max here    
+} 
+
 int analyze() {
     int token_length;
-    static int line_length;
-    lexical_store next;
-    uint8_t *temp;
-    
+    lexical_store next;    
+
+    TheInfo.capacity = 0;
+    TheInfo.count = 0;
+    TheInfo.columns = 0;
     TheInfo.rows = 1;
     TheInfo.index = 0;
     TheInfo.current = TheFile.content;
     TheInfo.prior_newline = TheFile.content;
+    TheInfo.line_length = 0;
 
-    line_length = 0;
+    token_length = 0;
     while ((next = lexer_next()).token != END_OF_CONTENT) {
-        token_length = next.end + 1 - TheInfo.current;
-        line_length += token_length;
+        token_length = next.end - next.begin;
+        TheInfo.line_length += token_length;
 
         switch (next.token) {
-        case LINE_END: {
-            TheInfo.rows += 1;
-            if (line_length > TheInfo.rows)
-                TheInfo.columns = line_length;
-            line_length = 0;
-            printf("new line (%d so far)\n", TheInfo.rows);
-        } break;
-        case INTEGER_DECIMAL_LITERAL: {
-            temp = (uint8_t *) calloc(0, token_length * sizeof(uint8_t));
-
-            memcpy(temp, TheInfo.current, token_length);
-
-            printf("<%s>[%d]\n", temp, token_length);
-
-            free(temp);
-        } break;
+        case LINE_END: case LINE_COMMENT:
+        case STRING_LITERAL: case RATIONAL_LITERAL:
+        case FLOAT_LITERAL: case INTEGER_LITERAL:
         case IDENTIFIER: {
-            temp = (uint8_t *) calloc(0, token_length * sizeof(uint8_t));
-
-            memcpy(temp, TheInfo.current, token_length);
-
-            printf("<%s>[%d]\n", temp, token_length);
-
-            free(temp);
+            push_token(next);
         } break;
         default: {
-            fprintf(stderr, "%s:%d:%d: \033[31;1merror:\033[0m "
-                "unknown symbol"
-                "\n"
-                , TheFile.name, TheInfo.rows, line_length
+            fprintf(stderr, "%s:%d:%d: "error_s
+                " unknown symbol" "\n"
+                "%s" "\n"
+                , TheFile.name, TheInfo.rows
+                , TheInfo.line_length, "uhh"
             );
             TheInfo.state = -1;
         }
         }
 
-        
-
-        TheInfo.current += token_length;
+        /* move the head up to the end of the current token */
+        TheInfo.current += next.end - TheInfo.current;
     }
-    printf("END OF CONTENT. Lexical analysis complete.\n");
     return 0;
 } 
+
+void lexer_print() {
+    int i, j, token_length;
+    lexical_store *token;
+    uint8_t *temp;
+    
+    for (i = 0; i < TheInfo.count; i++) {
+        token = &TheInfo.tokens[i];
+        token_length = token->end - token->begin;
+        printf("%s", token_names[token->token]);
+        temp = (uint8_t *) calloc(token_length + 1, sizeof(uint8_t));
+
+        memcpy(temp, token->begin, token_length);
+
+        for (j = 0; j < token_length; ++j)
+            temp[j] = bleach(temp[j]);
+
+        printf(" [%d] [%s]\n", token_length, temp);
+
+        free(temp);
+    }
+
+    return;
+}
 
 const struct lexer Lexer = {
     .file = &TheFile,
     .info = &TheInfo,
     .read = lexer_read,
     .free = lexer_free,
-    .analyze = analyze
+    .analyze = analyze,
+    .print = lexer_print
 };

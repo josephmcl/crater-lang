@@ -99,24 +99,38 @@ int utf8_code_point_to_int(uint8_t *code_point) {
 }
 
 int utf8_code_point_alpha(uint8_t code_point) {
-    if (utf8_code_point_length(code_point) != 1)
-        return 1;
     if (('A' <= code_point) && (code_point <= 'z')) 
         return 0;
     return 1;
 }
 
-int utf8_code_point_numeric(uint8_t code_point) {
-    if (utf8_code_point_length(code_point) != 1)
-        return 1;
+int is_alpha(uint8_t c) {
+    if (('A' <= c) && (c <= 'z')) 
+        return 0;
+    return 1;
+}
+
+int utf8_code_point_digit(uint8_t code_point) {
     if (('0' <= code_point) && (code_point <= '9')) 
         return 0;
     return 1;
 }
 
-int cp_alphanum(uint8_t c) {
+int is_digit(uint8_t c) {
+    if (('0' <= c) && (c <= '9')) 
+        return 0;
+    return 1;
+}
+
+uint8_t *consume_digits(uint8_t *head) {
+    while(is_digit(*(head++)) == 0)
+        ;
+    return head;
+}
+
+int is_alphanum(uint8_t c) {
     if ((utf8_code_point_alpha(c) == 0) || 
-        (utf8_code_point_numeric(c) == 0))
+        (utf8_code_point_digit(c) == 0))
         return 0;
     return 1;
 }
