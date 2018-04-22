@@ -20,8 +20,8 @@ static int validate_escape(uint8_t *head, uint8_t *end) {
     while(end - temp >= 0) {
         if (escaped == 0 && is_escape(*temp) != 0) 
             fprintf(stderr, "%s:%d:%ld: " error_s
-                " unknown escape sequence: \\%c"
-                "\n"
+                " unknown escape sequence:\n\\%c"
+                "\n\n"
                 , TheFile.name, TheInfo.rows
                 , TheInfo.line_length + temp - head, *temp
             );
@@ -121,7 +121,7 @@ lexical_store lexer_next() {
     }
     else {
         rv.token = UNKNOWN;
-        rv.end = rv.begin + utf8_code_point_length(*temp.end);
+        rv.end = rv.begin + utf8_code_point_length(*rv.begin);
     }
  
     return rv;
@@ -139,9 +139,66 @@ static void push_token(lexical_store token) {
     TheInfo.count += 1; // TODO: we'll need to specify a max here    
 } 
 
+#define BLURB_SIZE 60
+
+static uint8_t *line_blurb(uint8_t *end) { //TODO not UTF-8 safe
+    int i, size;
+    uint8_t *begin, *rv;
+    begin = TheInfo.prior_newline;
+    if (TheInfo.line_length > BLURB_SIZE)
+        begin += TheInfo.line_length - BLURB_SIZE;
+    if (begin + BLURB_SIZE > TheFile.end)
+        size = TheFile.end - begin;
+    else 
+        size = BLURB_SIZE;
+    rv = (uint8_t *) calloc(size + 1, sizeof(uint8_t));
+
+    memcpy(rv, begin, size);
+    for (i = 0; i < size; ++i)
+        rv[i] = peroxide(rv[i]);
+    return rv;
+
+}
+
+/* static */ uint8_t *line_blurb_with_caret(uint8_t *end) { //TODO WIP
+    printf("hello");
+    int i, offset, size, cp_count;
+    uint8_t *begin, *rv;
+    offset = 0;
+    cp_count = 0;
+    begin = TheInfo.prior_newline;
+    if (TheInfo.line_length > BLURB_SIZE)
+        begin += TheInfo.line_length - BLURB_SIZE;
+
+    while (utf8_code_point_length(*begin) == 0) {
+        begin += 1;
+        offset += 1;
+    }
+    size = BLURB_SIZE + 1 - offset;
+    rv = (uint8_t *) calloc(size * 2, sizeof(uint8_t));
+    memcpy(rv, begin, size);
+    rv[size] = '\n';
+
+    for (i = 0; i < size; ++i)
+        rv[i] = peroxide(rv[i]);
+    for (; i < size * 2 - 1; ++i)
+        rv[i] = ' ';
+    i = 0;
+    
+    while (i < size)
+        cp_count += utf8_code_point_length(*(begin + i));
+    rv[cp_count] = '^';
+    
+    return rv;
+
+}
+
+
+
 int analyze() {
     int token_length;
     lexical_store next;    
+    uint8_t *temp;
 
     TheInfo.capacity = 0;
     TheInfo.count = 0;
@@ -155,22 +212,32 @@ int analyze() {
     token_length = 0;
     while ((next = lexer_next()).token != END_OF_CONTENT) {
         token_length = next.end - next.begin;
-        TheInfo.line_length += token_length;
+        TheInfo.line_length += token_length + next.begin - TheInfo.current;
 
         switch (next.token) {
-        case LINE_END: case LINE_COMMENT:
+        case LINE_END: {
+            TheInfo.rows += 1;
+            if (TheInfo.line_length > TheInfo.rows)
+                TheInfo.columns = TheInfo.line_length;
+            TheInfo.line_length = 0;
+            TheInfo.prior_newline = next.end;
+            push_token(next);
+        } break;
+        case LINE_COMMENT:
         case STRING_LITERAL: case RATIONAL_LITERAL:
         case FLOAT_LITERAL: case INTEGER_LITERAL:
         case IDENTIFIER: {
             push_token(next);
         } break;
         default: {
+            temp = line_blurb(next.end);
             fprintf(stderr, "%s:%d:%d: "error_s
                 " unknown symbol" "\n"
-                "%s" "\n"
+                "%s" "\n\n"
                 , TheFile.name, TheInfo.rows
-                , TheInfo.line_length, "uhh"
+                , TheInfo.line_length, temp
             );
+            free(temp);
             TheInfo.state = -1;
         }
         }
@@ -189,7 +256,7 @@ void lexer_print() {
     for (i = 0; i < TheInfo.count; i++) {
         token = &TheInfo.tokens[i];
         token_length = token->end - token->begin;
-        printf("%s", token_names[token->token]);
+        printf("%s ", token_names[token->token]);
         temp = (uint8_t *) calloc(token_length + 1, sizeof(uint8_t));
 
         memcpy(temp, token->begin, token_length);
@@ -197,11 +264,11 @@ void lexer_print() {
         for (j = 0; j < token_length; ++j)
             temp[j] = bleach(temp[j]);
 
-        printf(" [%d] [%s]\n", token_length, temp);
+        // printf("[%d] [%s]\n", token_length, temp);
 
         free(temp);
     }
-
+    printf("\n");
     return;
 }
 

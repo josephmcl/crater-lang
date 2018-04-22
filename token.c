@@ -18,7 +18,7 @@ const char *token_names[] = {
     "IDENTIFIER"
 };
 
-int ustrncmp(const uint8_t *s1, const uint8_t *s2, size_t n) {
+/*static*/ int ustrncmp(const uint8_t *s1, const uint8_t *s2, size_t n) {
     while (n && *s1 && (*s1 == *s2)) {
         ++s1;
         ++s2;

@@ -56,3 +56,12 @@ char bleach(char c) {
     else 
         return c;
 }
+
+char peroxide(char c) {
+    if (c == '\r')
+        return '\0'; 
+    else if (c == '\n')
+        return '\0';
+    else 
+        return c;
+}

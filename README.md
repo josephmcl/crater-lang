@@ -1,7 +1,7 @@
 # crater-lang
 
 usage:
-```C
+```c
 #include "lexer.h"
 
 int main(int argc, char **argv) {
@@ -12,6 +12,8 @@ int main(int argc, char **argv) {
     Lexer.read(argv[1]);
     
     Lexer.analyze();
+
+    Lexer.print();
 
     Lexer.free();
 }

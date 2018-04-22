@@ -37,5 +37,7 @@ struct file_info_s {
 file_info read_file(const char *path, const char *options);
 
 char bleach(char c);
+/* please be careful */
+char peroxide(char c);
 
 #endif
