@@ -7,7 +7,7 @@
 
 const char *token_names[] = {
     "END_OF_CONTENT",
-    "ESACPE",
+    "ESCAPE",
     "LINE_END",
     "LINE_COMMENT",
     "TRIPLE_STRING",
@@ -51,18 +51,19 @@ int is_escape(uint8_t c) {
 
 uint8_t *identifier(uint8_t *head) {
     if (is_alpha(*head) == 0)  
-        while (is_alphanum(*head) == 0)
+        while (is_alphanum(*head) == 0 || *head == '_')
             head += 1; 
     return head;
 }
 
 uint8_t *integer_literal(uint8_t *head) {
-    if (is_digit(*head) == 0)      
+    if (is_digit19(*head) == 0)      
         while (is_digit(*head) == 0)
             head += 1;
+    else if (*head == '0')
+        head += 1;
     return head;
 }
-
 
 uint8_t *float_literal(uint8_t *head) {
     uint8_t *rv;
@@ -168,3 +169,117 @@ uint8_t *triple_string(uint8_t *head, uint8_t *end) {
     return rv;
 }
 */
+static uint8_t multi_byte_tokens[8 * 3] = {
+    "->\t"
+    "::\t"
+    "<<\t"
+    ">>\t"
+    "<=\t"
+    ">=\t"
+    "!=\t"
+    "**\t"
+};
+
+#define MB_TOKS 8
+#define MB_TOKS_OFFSET 3
+
+uint16_t multi_byte_token(uint8_t *s, uint8_t *end) {
+    int i, j;
+    uint8_t *temp, *stamp;
+
+    stamp = multi_byte_tokens;
+    for (i = 0; i < MB_TOKS; ++i) {
+        j = 0;
+        temp = s;
+        while (end - temp > 0 && *(temp + j) == *(stamp + j))
+            j += 1;
+
+        if (*(stamp + j) == '\t') {
+            return 
+                ((i + MULTI_BYTE_TOKENS) << 0x8) + j;
+        }
+        stamp += MB_TOKS_OFFSET;
+    }
+    return 0;
+}
+
+static uint8_t keyword_tokens[22 * 8] = { //45
+    "class\t  "
+    "def\t    "
+    "init\t   "
+    "return\t "
+    "extends\t"
+    "derives\t"
+    "expects\t"
+    "causes\t " 
+    "true\t   "
+    "false\t  "
+    "nil\t    "
+    "and\t    "
+    "or\t     "
+    "not\t    "
+    "if\t     "
+    "elif\t   "
+    "else\t   "
+    "while\t  "
+    "for\t    "
+    "var\t    "
+    "let\t    "
+    "set\t    "
+};
+
+#define KY_TOKS 22
+#define KY_TOKS_OFFSET 8
+
+uint16_t keyword_token(uint8_t *s, uint8_t *end) {
+    int i, j;
+    uint8_t *temp, *stamp;
+
+    stamp = keyword_tokens;
+    for (i = 0; i < KY_TOKS; ++i) {
+        j = 0;
+        temp = s;
+        while (end - temp > 0 && *(temp + j) == *(stamp + j))
+            j += 1;
+
+        if (*(stamp + j) == '\t') {
+            return 
+                ((i + KEYWORD_TOKENS) << 0x8) + j;
+        }
+        stamp += KY_TOKS_OFFSET;
+    }
+    return 0;
+}
+
+
+
+lexical_token single_byte_token(uint8_t c) {
+    switch (c) {
+    case '+': return PLUS;
+    case '-': return MINUS;
+    case '*': return STAR;
+    case '/': return SLASH;
+    case '^': return CARET;
+    case '~': return TILDA;
+    case ':': return IS;
+    case ';': return MANUAL_LINE_END;
+    case ',': return COMMA;
+    case '.': return DOT;
+    case '(': return LPARENTHESES;
+    case ')': return RPARENTHESES;
+    case '[': return LSQUARE;
+    case ']': return RSQUARE;
+    case '{': return LCURLY;
+    case '}': return RCURLY;
+    case '<': return LANGLE;
+    case '>': return RANGLE;
+    case '?': return QUESTION;
+    case '&': return AMPERSAND;
+    case '|': return LINE;
+    case '!': return EXCLAIM;
+    case '%': return PERCENT;
+    case '=': return EQUALS;
+
+    default: return UNKNOWN;
+    }
+}

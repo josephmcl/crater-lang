@@ -99,7 +99,8 @@ int utf8_code_point_to_int(uint8_t *code_point) {
 }
 
 int utf8_code_point_alpha(uint8_t code_point) {
-    if (('A' <= code_point) && (code_point <= 'z')) 
+    if ((('A' <= code_point) && (code_point <= 'Z')) ||
+       (('a' <= code_point) && (code_point <= 'z'))) 
         return 0;
     return 1;
 }
@@ -111,13 +112,20 @@ int is_alpha(uint8_t c) {
 }
 
 int utf8_code_point_digit(uint8_t code_point) {
-    if (('0' <= code_point) && (code_point <= '9')) 
+    if ((('A' <= code_point) && (code_point <= 'Z')) ||
+       (('a' <= code_point) && (code_point <= 'z'))) 
         return 0;
     return 1;
 }
 
 int is_digit(uint8_t c) {
     if (('0' <= c) && (c <= '9')) 
+        return 0;
+    return 1;
+}
+
+int is_digit19(uint8_t c) {
+    if (('1' <= c) && (c <= '9')) 
         return 0;
     return 1;
 }

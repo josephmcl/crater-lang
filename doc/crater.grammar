@@ -1,0 +1,39 @@
+
+<program> : <statements>
+
+<statements_block> : { <statements> }
+
+<statements> : <statements> <statement>
+             | e
+
+<statement> : 
+            | for  
+            | IF <r_expression> <statements_block> <elifs> <else>
+            | WHILE <r_expression> <statements_block>
+            | return <r_expression> <eos>
+            | VAR <l_expression> IS <r_expression> <eos>
+            | LET <l_expression> IS <r_expression> <eos>
+            | SET <l_expression> IS <r_expression> <eos>
+            | <l_expression> IS <r_expression> <eos>
+            | <r_expression> <eos>
+
+
+<l_expression> : IDENTIFIER
+               | <r_expression> DOT IDENTIFIER
+
+<r_expression> : <l_expression>
+               | LPARENTHESES <r_expression> RPARENTHESES
+               | <r_expression> PLUS <r_expression>
+               | <r_expression> MINUS <r_expression>
+               | <r_expression> STAR <r_expression>
+               | <r_expression> SLASH <r_expression>
+               | <r_expression> SLASH <r_expression>
+               | <r_expression> SLASH <r_expression>
+               | TRIPLE_STRING   
+               | STRING_LITERAL  
+               | RATIONAL_LITERAL
+               | FLOAT_LITERAL   
+               | INTEGER_LITERAL  
+
+<eos> : NEW_LINE
+      | MANUAL_LINE_END

@@ -33,8 +33,6 @@ static int validate_escape(uint8_t *head, uint8_t *end) {
 
 int lexer_read(const char *path) {
     TheFile = read_file(path, "r");
-
-    //stack_init(TheInfo.stack);
     return 0;
 }
 
@@ -42,14 +40,15 @@ void lexer_free() {
     free(TheFile.content);
     free(TheFile.name);
     free(TheInfo.tokens);
-    //free(TheInfo.tokens);
     TheFile = (file_info) {0};
     TheInfo = (lexical_info) {0}; 
 }
 
 lexical_store lexer_next() {
-    lexical_store rv, temp;
-    uint8_t *offset;
+    lexical_store rv;
+    uint8_t *offset, *head;
+    lexical_token token;
+    uint16_t pack;
 
 
     /* END_OF_CONTENT */
@@ -59,69 +58,80 @@ lexical_store lexer_next() {
         return rv;
     }
 
-    temp.token = UNKNOWN;
-    temp.end = TheInfo.current;
+    head = TheInfo.current;
     /* consume any whitespace */
-    while (utf8_whitespace(temp.end) == 0) {
-        //printf("<<%c>>", *temp.end);
-        temp.end += utf8_code_point_length(*temp.end);
-    }
+    while (utf8_whitespace(head) == 0) 
+        head += utf8_code_point_length(*head);
 
-    rv.begin = temp.end;
+    rv.begin = head;
 
     /* END_OF_CONTENT */
     if ((&TheFile.content[TheFile.length] - rv.begin) <= 0) {
         rv.token = END_OF_CONTENT;
         rv.end = TheInfo.current;
-        return rv;
+
     }
-    
+    /* MULTI BYTE TOKENS */
+    else if ((pack = multi_byte_token(head, TheFile.end)) != 0) {
+        rv.end = head + (pack & 0x00FF);
+        rv.token = (pack & 0xFF00) >> 0x8;
+
+    }
+    /* KEYWORD TOKENS */
+    else if ((pack = keyword_token(head, TheFile.end)) != 0) {
+        rv.end = head + (pack & 0x00FF);
+        rv.token = (pack & 0xFF00) >> 0x8;
+
+    }
+    /* SINGLE BYTE TOKENS */
+    else if ((token = single_byte_token(*head)) != UNKNOWN) {
+        rv.end = head + 1;
+        rv.token = token;
+    }
     /* STRING_LITERAL */
-    else if ((offset = string_literal(temp.end, TheFile.end))!=temp.end) {
-        validate_escape(temp.end, offset);
+    else if ((offset = string_literal(head, TheFile.end)) != head) {
+        validate_escape(head, offset);
 
         rv.end = offset;
         rv.token = STRING_LITERAL;
     }
-
     /* LINE_COMMENT */
-    else if ((offset = line_comment(temp.end, TheFile.end)) != temp.end) {
+    else if ((offset = line_comment(head, TheFile.end)) != head) {
         rv.end = offset;
         rv.token = LINE_COMMENT;
     }
-
     /* FLOAT_LITERAL */
-    else if ((offset = float_literal(temp.end)) != temp.end) {
+    else if ((offset = float_literal(head)) != head) {
         rv.end = offset;
         rv.token = FLOAT_LITERAL;
     }
-
     /* RATIONAL_LITERAL */
-    else if ((offset = rational_literal(temp.end)) != temp.end) {
+    else if ((offset = rational_literal(head)) != head) {
         rv.end = offset;
         rv.token = RATIONAL_LITERAL;
     }
-
     /* INTEGER_LITERAL */
-    else if ((offset = integer_literal(temp.end)) != temp.end) {
+    else if ((offset = integer_literal(head)) != head) {
         rv.end = offset;
         rv.token = INTEGER_LITERAL;
     }
-
     /* IDENTIFIER */
-    else if ((offset = identifier(temp.end)) != temp.end) {
+    else if ((offset = identifier(head)) != head) {
         rv.end = offset;
         rv.token = IDENTIFIER;
     }
-
+    else if (*head == '\\') {
+        rv.end = head + 1;
+        rv.token = ESCAPE;
+    }
     /* LINE END */
-    else if (*temp.end == '\n') {
+    else if (*head == '\n') {
         rv.token = LINE_END;
-        rv.end = rv.begin + 1;
+        rv.end = head + 1;
     }
     else {
         rv.token = UNKNOWN;
-        rv.end = rv.begin + utf8_code_point_length(*rv.begin);
+        rv.end = head + utf8_code_point_length(*head);
     }
  
     return rv;
@@ -211,6 +221,7 @@ int analyze() {
 
     token_length = 0;
     while ((next = lexer_next()).token != END_OF_CONTENT) {
+        
         token_length = next.end - next.begin;
         TheInfo.line_length += token_length + next.begin - TheInfo.current;
 
@@ -223,13 +234,8 @@ int analyze() {
             TheInfo.prior_newline = next.end;
             push_token(next);
         } break;
-        case LINE_COMMENT:
-        case STRING_LITERAL: case RATIONAL_LITERAL:
-        case FLOAT_LITERAL: case INTEGER_LITERAL:
-        case IDENTIFIER: {
-            push_token(next);
-        } break;
-        default: {
+
+        case UNKNOWN: {
             temp = line_blurb(next.end);
             fprintf(stderr, "%s:%d:%d: "error_s
                 " unknown symbol" "\n"
@@ -239,7 +245,11 @@ int analyze() {
             );
             free(temp);
             TheInfo.state = -1;
-        }
+        } break;
+        
+        default: {
+            push_token(next);
+        } break;
         }
 
         /* move the head up to the end of the current token */
@@ -256,7 +266,10 @@ void lexer_print() {
     for (i = 0; i < TheInfo.count; i++) {
         token = &TheInfo.tokens[i];
         token_length = token->end - token->begin;
-        printf("%s ", token_names[token->token]);
+        if(token->token < 10)
+            printf("%s ", token_names[token->token]);
+        else 
+            printf("<%d> ", token->token);
         temp = (uint8_t *) calloc(token_length + 1, sizeof(uint8_t));
 
         memcpy(temp, token->begin, token_length);
@@ -264,7 +277,7 @@ void lexer_print() {
         for (j = 0; j < token_length; ++j)
             temp[j] = bleach(temp[j]);
 
-        // printf("[%d] [%s]\n", token_length, temp);
+        printf("[%s] [%d]\n", temp, token_length);
 
         free(temp);
     }

@@ -1,6 +1,6 @@
 "hello"
 Crater Lake # blah blue bed
-
+# hello :)
 was a place of mystery to the Klamath Indians.The Klamath 😋
 Indians must have lived in the region as early as 7,700 years ago, because
 artifacts such as obsidian tools, spear throwers, and moccasins have been
@@ -11,18 +11,14 @@ raging war between two great volcanoes, Mount Mazama and Mount Shasta,
 parallels the geological history of Crater Lake. 
 Red dad did
 
-integer 
-100
 
-float 
-200.10
+# hello :)
 
-rational 
-3/10  
-3 /10 
-3/ 10
-3 / 10
-
-'hello "hello\"'
-'bye \b \poo bye \''
-.
+->
+::
+<<
+>>
+<=
+>=
+!=
+**
