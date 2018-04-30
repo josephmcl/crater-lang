@@ -1,39 +1,96 @@
+#
+# Crater Lang
+# BNF-esque grammar
+#
 
 <program> : <statements>
-
-<statements_block> : { <statements> }
+          ;
 
 <statements> : <statements> <statement>
-             | e
+             | <statements_block> <statement>
+             | *e
+             ;
 
-<statement> : 
-            | for  
-            | IF <r_expression> <statements_block> <elifs> <else>
-            | WHILE <r_expression> <statements_block>
+<statements_block> : { <statements> }
+                   ;
+
+<statement> : def L&IDENTIFIER ( <r_expressions_s> ) <r_type> <statements_block>  
+            | if <r_expression> <statements_block> <elifs> <else>
+            | while <r_expression> <statements_block>
             | return <r_expression> <eos>
-            | VAR <l_expression> IS <r_expression> <eos>
-            | LET <l_expression> IS <r_expression> <eos>
-            | SET <l_expression> IS <r_expression> <eos>
-            | <l_expression> IS <r_expression> <eos>
-            | <r_expression> <eos>
+            | return <eos>
+            | var L&IDENTIFIER : <r_expressions_s> <eos>
+            | let L&IDENTIFIER : <r_expressions_s> <eos>
+            | set L&IDENTIFIER : <r_expressions_s> <eos>
+            | <l_expressions_s> : <r_expressions_s> <eos>
+            | <r_expressions_s> <eos>
+            ;
 
+<r_type> : *e
+         | -> <r_expressions_s>
+         ;
 
-<l_expression> : IDENTIFIER
-               | <r_expression> DOT IDENTIFIER
+<elifs> : *e
+        | <elifs> <elif>
+        ;
+
+<elif> : elif <r_expression> <statement_block>
+
+<type_id> : ARROW <r_expression>
+          | *e
+          ;
+
+<l_expressions_s> : *e
+                  | <l_expressions>
+                  ;
+
+<l_expressions> : *e
+                | <l_expressions> , <l_expression>
+                ;
+
+<l_expression> : L&IDENTIFIER
+               | <r_expression> . L&IDENTIFIER
+               ;
+
+<r_expressions_s> : *e
+                  | <r_expressions>
+                  ;
+
+<r_expressions> : *e
+                | <r_expressions> , <r_expression>
+                ;
 
 <r_expression> : <l_expression>
-               | LPARENTHESES <r_expression> RPARENTHESES
-               | <r_expression> PLUS <r_expression>
-               | <r_expression> MINUS <r_expression>
-               | <r_expression> STAR <r_expression>
-               | <r_expression> SLASH <r_expression>
-               | <r_expression> SLASH <r_expression>
-               | <r_expression> SLASH <r_expression>
-               | TRIPLE_STRING   
-               | STRING_LITERAL  
-               | RATIONAL_LITERAL
-               | FLOAT_LITERAL   
-               | INTEGER_LITERAL  
+               | ( <r_expression> )
+               | <r_expression> . L&IDENTIFIER ( <r_expressions_s> )
+               | L&IDENTIFIER ( <r_expressions_s> )
+               | <r_expression> <operation> <r_expression>
+               | L&TRIPLE_STRING   
+               | L&STRING_LITERAL  
+               | L&RATIONAL_LITERAL
+               | L&FLOAT_LITERAL   
+               | L&INTEGER_LITERAL 
+               | nil
+               | <boolean_literal>
+               ; 
+
+<boolean_literal> : true
+                  | false
+                  ;
+
+<operation> : + 
+            | - 
+            | * 
+            | / 
+            | ** 
+            | % 
+            | and 
+            | or 
+            ;
+            # | xor | & | | | ^
 
 <eos> : NEW_LINE
       | MANUAL_LINE_END
+      ;
+
+# NOTE: *e is empty

@@ -48,7 +48,6 @@ int is_escape(uint8_t c) {
     }
 } 
 
-
 uint8_t *identifier(uint8_t *head) {
     if (is_alpha(*head) == 0)  
         while (is_alphanum(*head) == 0 || *head == '_')
@@ -122,11 +121,11 @@ uint8_t *line_comment(uint8_t *head, uint8_t *end) {
     uint8_t *rv;
 
     rv = head;
-    if (*rv == '#')      
-        while (*rv != '\n') {
-            if (end - rv <= 0)
-                return head;
+    if (*rv == '#') {     
+        while (*rv != '\n' && end - rv > 0) {
             rv += utf8_code_point_length(*rv);
+
+        }
     }
     return rv;
 }

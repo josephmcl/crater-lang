@@ -50,29 +50,32 @@ lexical_store lexer_next() {
     lexical_token token;
     uint16_t pack;
 
+    head = TheInfo.current;
+    /* END_OF_CONTENT */
+    if (TheFile.end - head <= 0) {
+        rv.token = END_OF_CONTENT;
+        rv.end = head;
+        return rv;
+    }
+
+    
+    /* consume any whitespace */
+    while (utf8_whitespace(head) == 0) 
+        head += utf8_code_point_length(*head);
+
+    
 
     /* END_OF_CONTENT */
-    if ((&TheFile.content[TheFile.length] - TheInfo.current) <= 0) {
+    if (TheFile.end - head <= 0) {
         rv.token = END_OF_CONTENT;
         rv.end = TheInfo.current;
         return rv;
     }
 
-    head = TheInfo.current;
-    /* consume any whitespace */
-    while (utf8_whitespace(head) == 0) 
-        head += utf8_code_point_length(*head);
-
     rv.begin = head;
 
-    /* END_OF_CONTENT */
-    if ((&TheFile.content[TheFile.length] - rv.begin) <= 0) {
-        rv.token = END_OF_CONTENT;
-        rv.end = TheInfo.current;
-
-    }
     /* MULTI BYTE TOKENS */
-    else if ((pack = multi_byte_token(head, TheFile.end)) != 0) {
+    if ((pack = multi_byte_token(head, TheFile.end)) != 0) {
         rv.end = head + (pack & 0x00FF);
         rv.token = (pack & 0xFF00) >> 0x8;
 
