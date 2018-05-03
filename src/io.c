@@ -42,8 +42,6 @@ file_info read_file(const char *path, const char *options) {
     rv.name = (uint8_t *) calloc(strlen(path) + 1, sizeof(uint8_t));
     memcpy(rv.name, path, strlen(path) * sizeof(uint8_t));
 
-    printf("%s\n", rv.name);
-
     rv.end = &rv.content[rv.length];
     return rv;
 } 

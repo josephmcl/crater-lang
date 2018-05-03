@@ -93,6 +93,7 @@ typedef struct {
     lexical_token token;
     uint8_t *begin;
     uint8_t *end;
+    unsigned int row, column;
 } lexical_store;
 
 extern const char *token_names[];
@@ -118,7 +119,5 @@ uint8_t *line_comment(uint8_t *head, uint8_t *end);
 uint8_t *string_literal(uint8_t *head, uint8_t *end);
 
 int is_escape(uint8_t c);
-
-
 
 #endif /* CRATER_LANG_TOKEN_H_ */

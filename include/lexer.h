@@ -15,10 +15,11 @@
 #include "codepoint.h"
 #include "token.h"
 
+
+typedef lexical_store *lexical_stores;
 typedef struct {
     int count;
     int capacity;
-    lexical_store *tokens;
     unsigned int rows;
     unsigned int columns;
     unsigned int line_length;
@@ -31,10 +32,11 @@ typedef struct {
 struct lexer {
     file_info *file;
     lexical_info *info;
-    int (*read)(const char *path);
-    void (*free)();
-    int (*analyze)();
-    void (*print)();
+    lexical_store **tokens;
+    int ( *read)(const char *path);
+    void ( *free)();
+    int ( *analyze)();
+    void ( *print)();
 };
 
 extern const struct lexer Lexer;

@@ -122,10 +122,8 @@ uint8_t *line_comment(uint8_t *head, uint8_t *end) {
 
     rv = head;
     if (*rv == '#') {     
-        while (*rv != '\n' && end - rv > 0) {
+        while (end - rv > 0 && *rv != '\n') 
             rv += utf8_code_point_length(*rv);
-
-        }
     }
     return rv;
 }

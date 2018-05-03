@@ -8,6 +8,7 @@
 #define TOKENS_SIZE 25
 
 /* The struct in which the lexer operates on. */
+static lexical_store *TheTokens;
 static file_info TheFile = {0}; 
 static lexical_info TheInfo = {0}; 
 
@@ -39,7 +40,7 @@ int lexer_read(const char *path) {
 void lexer_free() {
     free(TheFile.content);
     free(TheFile.name);
-    free(TheInfo.tokens);
+    free(TheTokens);
     TheFile = (file_info) {0};
     TheInfo = (lexical_info) {0}; 
 }
@@ -141,14 +142,17 @@ lexical_store lexer_next() {
 }
 
 static void push_token(lexical_store token) {  
+    
     if (TheInfo.count == TheInfo.capacity) {
         TheInfo.capacity += TOKENS_SIZE;
-        TheInfo.tokens = (lexical_store *) realloc(
-            TheInfo.tokens, 
+        //TODO: make this safe
+        
+        TheTokens = (lexical_store *) realloc(
+            TheTokens, 
             TheInfo.capacity * sizeof(lexical_store)
         );       
     }
-    TheInfo.tokens[TheInfo.count] = token;
+    TheTokens[TheInfo.count] = token;
     TheInfo.count += 1; // TODO: we'll need to specify a max here    
 } 
 
@@ -228,6 +232,9 @@ int analyze() {
         token_length = next.end - next.begin;
         TheInfo.line_length += token_length + next.begin - TheInfo.current;
 
+        next.row = TheInfo.line_length;
+        next.column = TheInfo.columns;
+
         switch (next.token) {
         case LINE_END: {
             TheInfo.rows += 1;
@@ -267,7 +274,7 @@ void lexer_print() {
     uint8_t *temp;
     
     for (i = 0; i < TheInfo.count; i++) {
-        token = &TheInfo.tokens[i];
+        token = (TheTokens + i);
         token_length = token->end - token->begin;
         if(token->token < 10)
             printf("%s ", token_names[token->token]);
@@ -291,6 +298,7 @@ void lexer_print() {
 const struct lexer Lexer = {
     .file = &TheFile,
     .info = &TheInfo,
+    .tokens = &TheTokens,
     .read = lexer_read,
     .free = lexer_free,
     .analyze = analyze,
