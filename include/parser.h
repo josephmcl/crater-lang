@@ -8,6 +8,14 @@
 #include "lexer.h"
 
 
+typedef enum {
+    PG_PARSER = 0,
+    PG_STATE,
+    PG_VARIANT,
+    PG_INVARIANT
+
+} parser_grammar;
+
 typedef struct production_s production;
 struct production_s {
     int index;
@@ -16,15 +24,14 @@ struct production_s {
 
 typedef struct parser_info_s parser_info;
 struct parser_info_s {
-    int count;
+    int length;
+    int capacity; 
 };
-
-typedef production *productionz; 
 
 struct parser {
     parser_info *info;
-    productionz *productions; 
-    int ( *generate_productions) (lexical_store **tokens, int count);
+    int ( *generate) (void);
 };
 
 const extern struct parser Parser;
+

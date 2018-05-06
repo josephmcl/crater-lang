@@ -3,94 +3,110 @@
 # BNF-esque grammar
 #
 
-<program> : <statements>
-          ;
+program 
+   : statements
+   ;
 
-<statements> : <statements> <statement>
-             | <statements_block> <statement>
-             | *e
-             ;
+statements 
+   : statements statement
+   | statements_block statement
+   | empty
+   ;
 
-<statements_block> : { <statements> }
-                   ;
+statements_block 
+   : { statements }
+   ;
 
-<statement> : def L&IDENTIFIER ( <r_expressions_s> ) <r_type> <statements_block>  
-            | if <r_expression> <statements_block> <elifs> <else>
-            | while <r_expression> <statements_block>
-            | return <r_expression> <eos>
-            | return <eos>
-            | var L&IDENTIFIER : <r_expressions_s> <eos>
-            | let L&IDENTIFIER : <r_expressions_s> <eos>
-            | set L&IDENTIFIER : <r_expressions_s> <eos>
-            | <l_expressions_s> : <r_expressions_s> <eos>
-            | <r_expressions_s> <eos>
-            ;
+statement 
+   : def IDENTIFIER ( r_expressions_s ) r_type statements_block  
+   | if r_expression statements_block elifs else
+   | while r_expression statements_block
+   | return r_expression eos
+   | return eos
+   | var IDENTIFIER : r_expressions_s eos
+   | let IDENTIFIER : r_expressions_s eos
+   | set IDENTIFIER : r_expressions_s eos
+   | l_expressions_s : r_expressions_s eos
+   | r_expressions_s eos
+   ;
 
-<r_type> : *e
-         | -> <r_expressions_s>
-         ;
+r_type 
+   : empty
+   | - r_expressions_s
+   ;
 
-<elifs> : *e
-        | <elifs> <elif>
-        ;
+elifs 
+   : empty
+   | elifs elif
+   ;
 
-<elif> : elif <r_expression> <statement_block>
+elif 
+   : elif r_expression statement_block
+   ;
 
-<type_id> : ARROW <r_expression>
-          | *e
-          ;
+type_id 
+   : ARROW r_expression
+   | empty
+   ;
 
-<l_expressions_s> : *e
-                  | <l_expressions>
-                  ;
+l_expressions_s 
+   : empty
+   | l_expressions
+   ;
 
-<l_expressions> : *e
-                | <l_expressions> , <l_expression>
-                ;
+l_expressions 
+   : empty
+   | l_expressions , l_expression
+   ;
 
-<l_expression> : L&IDENTIFIER
-               | <r_expression> . L&IDENTIFIER
-               ;
+l_expression 
+   : IDENTIFIER
+   | r_expression . IDENTIFIER
+   ;
 
-<r_expressions_s> : *e
-                  | <r_expressions>
-                  ;
+r_expressions_s 
+   : empty
+   | r_expressions
+   ;
 
-<r_expressions> : *e
-                | <r_expressions> , <r_expression>
-                ;
+r_expressions 
+   : empty
+   | r_expressions , r_expression
+   ;
 
-<r_expression> : <l_expression>
-               | ( <r_expression> )
-               | <r_expression> . L&IDENTIFIER ( <r_expressions_s> )
-               | L&IDENTIFIER ( <r_expressions_s> )
-               | <r_expression> <operation> <r_expression>
-               | L&TRIPLE_STRING   
-               | L&STRING_LITERAL  
-               | L&RATIONAL_LITERAL
-               | L&FLOAT_LITERAL   
-               | L&INTEGER_LITERAL 
-               | nil
-               | <boolean_literal>
-               ; 
+r_expression 
+   : l_expression
+   | ( r_expression )
+   | r_expression . IDENTIFIER ( r_expressions_s )
+   | IDENTIFIER ( r_expressions_s )
+   | r_expression operation r_expression
+   | TRIPLE_STRING   
+   | STRING_LITERAL  
+   | RATIONAL_LITERAL
+   | FLOAT_LITERAL   
+   | INTEGER_LITERAL 
+   | nil
+   | boolean_literal
+   ; 
 
-<boolean_literal> : true
-                  | false
-                  ;
+boolean_literal 
+   : true
+   | false
+   ;
 
-<operation> : + 
-            | - 
-            | * 
-            | / 
-            | ** 
-            | % 
-            | and 
-            | or 
-            ;
-            # | xor | & | | | ^
+operation 
+   : + 
+   | - 
+   | * 
+   | / 
+   | ** 
+   | % 
+   | and 
+   | or 
+   ;
+   # | xor | & | | | ^
 
-<eos> : NEW_LINE
-      | MANUAL_LINE_END
-      ;
-
-# NOTE: *e is empty
+eos 
+   : NEW_LINE
+   | MANUAL_LINE_END
+   ;

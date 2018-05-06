@@ -114,7 +114,7 @@ uint8_t *consume_whitespace(uint8_t *head);
 uint8_t *identifier(uint8_t *head);
 uint8_t *integer_literal(uint8_t *head);
 uint8_t *float_literal(uint8_t *head);
-uint8_t *rational_literal(uint8_t *head);
+uint8_t *rational_literal(uint8_t *head, uint8_t *end);
 uint8_t *line_comment(uint8_t *head, uint8_t *end);
 uint8_t *string_literal(uint8_t *head, uint8_t *end);
 

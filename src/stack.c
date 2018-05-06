@@ -13,31 +13,42 @@ stack_t stack_init() {
     rv.content = calloc(0, sizeof(void *));
     return rv;
 }
+
 void stack_free(stack_t *stack) {
     free(stack->content);
-    *stack = {0};
+    stack->size = 0;
+    stack->capacity = 0;
 }
 
-int push(void *item) {
+int stack_push(stack_t *stack, void *item) {
     if (stack->size == stack->capacity) {
         stack->capacity += STACK_BLOCK;
-        stack->content = realloc(stack->content, stack->capacity);
+        stack->content = realloc(
+            stack->content, 
+            stack->capacity * sizeof (void *)
+        );
     }
-    stack->content[stack->size] = item;
     stack->size += 1;
+    stack->content[stack->size - 1] = item;
+    
+    
     return 0;
 }
-int pop(stack_t *stack) { 
-    if (stack->size <= 0) 
+
+int stack_pop(stack_t *stack) { 
+    if (stack->size <= 1) 
         return 1;
     //TODO: in C99 I think we can use realloc to resize down
     // going to have to decide at some point...
-    stack->size -= 1;
-    stack->content[stack->size] = 0;
     
+    stack->content[stack->size - 1] = NULL;
+    stack->size -= 1;
+
+    return 0;
 }
-void *peek(stack_t *stack) {
+
+void *stack_peek(stack_t *stack) {
     if (stack->size > 0)
-        return stack->content[stack->size];
+        return stack->content[stack->size - 1];
     return NULL;
 }

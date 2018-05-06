@@ -86,11 +86,11 @@ uint8_t *float_literal(uint8_t *head) {
     return rv;
 }
 
-uint8_t *rational_literal(uint8_t *head) {
+uint8_t *rational_literal(uint8_t *head, uint8_t *end) {
     uint8_t *rv;
     rv = head;
     if (is_digit(*rv) == 0)      
-        while (is_digit(*rv) == 0) {
+        while (end - rv > 0 && is_digit(*rv) == 0) {
             rv += 1;
         }
     else
@@ -101,7 +101,7 @@ uint8_t *rational_literal(uint8_t *head) {
     rv++;
     rv = consume_whitespace(rv);
     if (is_digit(*rv) == 0)      
-        while (is_digit(*rv) == 0) {
+        while (end - rv > 0 && is_digit(*rv) == 0) {
             rv += 1;
         }
     else 

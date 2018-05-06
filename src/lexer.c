@@ -55,7 +55,8 @@ lexical_store lexer_next() {
     /* END_OF_CONTENT */
     if (TheFile.end - head <= 0) {
         rv.token = END_OF_CONTENT;
-        rv.end = head;
+        rv.begin = TheInfo.current;
+        rv.end = TheFile.end;
         return rv;
     }
 
@@ -69,7 +70,8 @@ lexical_store lexer_next() {
     /* END_OF_CONTENT */
     if (TheFile.end - head <= 0) {
         rv.token = END_OF_CONTENT;
-        rv.end = TheInfo.current;
+        rv.begin = TheInfo.current;
+        rv.end = TheFile.end;
         return rv;
     }
 
@@ -110,7 +112,7 @@ lexical_store lexer_next() {
         rv.token = FLOAT_LITERAL;
     }
     /* RATIONAL_LITERAL */
-    else if ((offset = rational_literal(head)) != head) {
+    else if ((offset = rational_literal(head, TheFile.end)) != head) {
         rv.end = offset;
         rv.token = RATIONAL_LITERAL;
     }
@@ -142,7 +144,7 @@ lexical_store lexer_next() {
 }
 
 static void push_token(lexical_store token) {  
-    
+
     if (TheInfo.count == TheInfo.capacity) {
         TheInfo.capacity += TOKENS_SIZE;
         //TODO: make this safe
@@ -265,6 +267,9 @@ int analyze() {
         /* move the head up to the end of the current token */
         TheInfo.current += next.end - TheInfo.current;
     }
+
+    push_token(next);
+
     return 0;
 } 
 
@@ -295,10 +300,29 @@ void lexer_print() {
     return;
 }
 
+lexical_token lexer_get_token(size_t index) {
+
+    if (index > TheInfo.count)
+        return UNKNOWN;
+
+    return TheTokens[index].token; 
+}
+
+lexical_store *lexer_get_store(size_t index) {
+
+    if (index > TheInfo.count)
+        return NULL;
+
+    return (TheTokens + index); 
+}
+
 const struct lexer Lexer = {
     .file = &TheFile,
     .info = &TheInfo,
-    .tokens = &TheTokens,
+
+    .token = lexer_get_token,
+    .store = lexer_get_store,
+    
     .read = lexer_read,
     .free = lexer_free,
     .analyze = analyze,

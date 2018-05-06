@@ -8,9 +8,9 @@
 
 #include <stdlib.h>
 
-/* unsafe stack, only push pointers to value types */
+/* a stack for pointers to value types */
 typedef struct {
-    void *content;
+    void **content;
     unsigned int size;
     unsigned int capacity;
 } stack_t;
@@ -18,8 +18,8 @@ typedef struct {
 stack_t stack_init();
 void stack_free(stack_t *stack);
 
-int push(stack_t *stack, void *item);
-int pop(stack_t *stack);
-void *peek(stack_t *stack);
+int stack_push(stack_t *stack, void *item);
+int stack_pop(stack_t *stack);
+void *stack_peek(stack_t *stack);
 
 #endif
