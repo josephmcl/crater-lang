@@ -10,7 +10,7 @@ program
 statements 
    : statements statement
    | statements_block statement
-   | empty
+   | # empty
    ;
 
 statements_block 
@@ -31,12 +31,12 @@ statement
    ;
 
 r_type 
-   : empty
+   : # empty
    | - r_expressions_s
    ;
 
 elifs 
-   : empty
+   : # empty
    | elifs elif
    ;
 
@@ -46,16 +46,16 @@ elif
 
 type_id 
    : ARROW r_expression
-   | empty
+   | # empty
    ;
 
 l_expressions_s 
-   : empty
+   : # empty
    | l_expressions
    ;
 
 l_expressions 
-   : empty
+   : # empty
    | l_expressions , l_expression
    ;
 
@@ -65,12 +65,12 @@ l_expression
    ;
 
 r_expressions_s 
-   : empty
+   : # empty
    | r_expressions
    ;
 
 r_expressions 
-   : empty
+   : # empty
    | r_expressions , r_expression
    ;
 

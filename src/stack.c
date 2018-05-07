@@ -10,7 +10,7 @@
 
 stack_t stack_init() {
     stack_t rv = {0};
-    rv.content = calloc(0, sizeof(void *));
+    rv.content = calloc(0, sizeof(pg_node_t));
     return rv;
 }
 

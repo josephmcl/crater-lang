@@ -7,40 +7,75 @@
 #include "stack.h"
 
 static parser_info TheInfo = {0};
-static production *TheProductions;
 
-static void _append_production(production p) {
-    production *temp;
-    if (TheInfo.length == TheInfo.capacity) {
-        TheInfo.capacity += 10;
+// top 
+//      : invariant_defs
+// invariant_defs
+//      : e
+//      | invariant_defs invariant_def
+// invariant_def 
+//      : IDENTIFIER COLON tokens LINE_END productions SEMICOLON
+// productions 
+//      : empty
+//      | productions production
+// production
+//      : LINE tokens LINE_END
+// tokens
+//      : empty
+//      | tokens (*) # (*) = tokens besides LINE_END
 
-        temp = realloc(
-            TheProductions, 
-            TheInfo.capacity * sizeof(uint8_t)
-        );  
-        if (temp == NULL)
-            exit(-1);
-        TheProductions = temp;
-    }
-    TheProductions[TheInfo.length] = p;
-    TheInfo.length += 1; // TODO: we'll need to specify a max here
-}
+
+// TODO: write
+//static int pg_evaluate(stack_t *s, void *item);
+// TODO: write
+//static int pg_reduce(stack_t *s, void *item);
+
 
 int parser_generate(void) {
     lexical_token token;
     size_t i;
     stack_t s;
     lexical_store *store;
+    int result, excess;
+    
     s = stack_init();
 
-
-
-    i = 0;
+    i = 0; excess = 1;
     while ((token = Lexer.token(i)) != UNKNOWN && token != END_OF_CONTENT) {
 
         store = Lexer.store(i);
-        stack_push(&s, (void *) store);
-        printf("%d ", store->token);
+
+        switch (store->token) {
+        case LINE_END: {
+            if (excess == 0) {
+                result = pg_evaluate(&s, (void *) store);
+                if (result == 0)
+                    stack_push(&s, (void *) store);
+                else if (result > 0) 
+                    pg_reduce(s, (void *) result);
+                else 
+                    ; // conflicts 
+                stack_push(&s, (void *) store);
+                excess = 1;
+            }
+        } break;
+        case LINE_COMMENT: {
+            ;
+        } break;
+        default: {
+            excess = 0;
+            result = pg_evaluate(&s);
+            if (result == 0) 
+                stack_push(&s, (void *) store);
+            else if (result > 0) 
+                pg_reduce(s, result);
+            else 
+                ; // conflicts 
+            
+        } break;
+        }
+
+        
         i += 1;
     }
     
@@ -58,17 +93,15 @@ int parser_generate(void) {
     } while (stack_pop(&s) == 0);
 
     printf("\n");
-    
+
     stack_free(&s);
 
     return 0;
 }
-
-
-
 
 const struct parser Parser = {
     .info = &TheInfo,
     .generate = parser_generate
 
 };
+
